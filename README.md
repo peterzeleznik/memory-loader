@@ -1,13 +1,24 @@
 # memory-loader
 
 > File-based project memory for Claude Code.
-> Loads previous session context automatically. Writes new learnings back at session end.
+> Install once — works automatically in every project.
+
+## The key thing
+
+Install it once with user scope. That's it.
+
+Every project gets its **own isolated memory**, loaded automatically at session start.
+- Working on your SaaS? → loads SaaS memory
+- Switching to your agency project? → loads that memory instead
+- New project? → creates a fresh `MEMORY.md` template automatically
+
+No configuration. No activation. Just open Claude Code and your context is there.
 
 ## What it does
 
-- **Session Start** — reads all `*.md` files from your project's memory directory and prints them into Claude's context window automatically
+- **Session Start** — detects your current project directory, reads all `*.md` files from its memory folder, and prints them into Claude's context window automatically
 - **Session End** — prompts Claude to summarize the session and append it to `MEMORY.md`
-- **Project-agnostic** — works with any project, detects directory automatically
+- **Auto-creates** `MEMORY.md` on first run if none exists
 
 ## Install
 
@@ -16,13 +27,26 @@
 /plugin install memory-loader@memory-loader
 ```
 
+Choose **"Install for you (user scope)"** — this makes it active in all your projects automatically.
+
 ## Memory location
 
+Each project gets its own memory directory:
+
 ```
-~/.claude/projects/[sanitized-project-path]/memory/
+~/.claude/projects/[project-path]/memory/
 ├── MEMORY.md        ← main file, auto-created on first run
-└── *.md             ← optional topic files
+└── *.md             ← optional topic files (decisions, architecture, bugs...)
 ```
+
+Example — if you have 3 projects:
+```
+~/.claude/projects/-Users-you-my-saas/memory/MEMORY.md
+~/.claude/projects/-Users-you-agency-site/memory/MEMORY.md
+~/.claude/projects/-Users-you-side-project/memory/MEMORY.md
+```
+
+Each one is independent. Claude never mixes them up.
 
 ## Works best with
 
