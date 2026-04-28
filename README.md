@@ -5,7 +5,7 @@
 
 ## What it does
 
-- **Session Start** — reads all `*.md` files from your project's memory directory and loads them into context (via context-mode FTS5 if available)
+- **Session Start** — reads all `*.md` files from your project's memory directory and prints them into Claude's context window automatically
 - **Session End** — prompts Claude to summarize the session and append it to `MEMORY.md`
 - **Project-agnostic** — works with any project, detects directory automatically
 
@@ -26,7 +26,7 @@
 
 ## Works best with
 
-- [context-mode](https://github.com/mksglu/context-mode) — indexes memory into FTS5 for fast search
+- [context-mode](https://github.com/mksglu/context-mode) — after session start, ask Claude to run `ctx_index` on your memory files for FTS5 search support
 
 ## License
 
