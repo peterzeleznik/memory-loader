@@ -1,0 +1,24 @@
+{
+  "name": "memory-loader",
+  "version": "1.0.0",
+  "description": "File-based project memory for Claude Code — loads context from previous sessions, indexes via context-mode FTS5, writes back at session end.",
+  "author": "Peter Zeleznik",
+  "license": "MIT",
+  "homepage": "https://github.com/peterzeleznik/memory-loader",
+  "skills": [
+    {
+      "name": "memory-loader",
+      "path": "SKILL.md"
+    }
+  ],
+  "hooks": {
+    "SessionStart": "hooks/session-start.mjs",
+    "SessionStop": "hooks/session-end.mjs"
+  },
+  "compatibility": {
+    "claude-code": ">=1.0.0",
+    "plugins": {
+      "context-mode": "optional"
+    }
+  }
+}
