@@ -1,0 +1,23 @@
+{
+  "name": "memory-loader",
+  "owner": {
+    "name": "Peter Zeleznik",
+    "email": "peter.zeleznik@gmail.com"
+  },
+  "metadata": {
+    "description": "File-based project memory for Claude Code — auto-loads context from previous sessions",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "memory-loader",
+      "source": "../",
+      "description": "Loads MEMORY.md and project memory files at session start so Claude never loses context between sessions.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Peter Zeleznik"
+      },
+      "category": "productivity"
+    }
+  ]
+}
