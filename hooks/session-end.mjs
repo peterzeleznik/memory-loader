@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * memory-loader — SessionStop hook
- * Signals Claude to summarize the session and append to MEMORY.md.
- * The actual write happens via Claude — this hook prints the format.
+ * memory-loader — SessionEnd hook
+ * Automatically writes a session entry to feedback_session_log.md
+ * using git facts — no Claude action required.
  */
 
-import { existsSync } from 'fs'
+import { existsSync, appendFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
+import { execSync } from 'child_process'
 
 function getMemoryDir() {
   const projectDir = process.cwd()
@@ -15,26 +16,56 @@ function getMemoryDir() {
   return join(homedir(), '.claude', 'projects', sanitized, 'memory')
 }
 
+function run(cmd) {
+  try {
+    return execSync(cmd, { cwd: process.cwd(), encoding: 'utf-8' }).trim()
+  } catch {
+    return null
+  }
+}
+
 function main() {
   const memoryDir = getMemoryDir()
-  const memoryFile = join(memoryDir, 'MEMORY.md')
+  const logFile = join(memoryDir, 'feedback_session_log.md')
 
-  if (!existsSync(memoryFile)) {
-    console.log('[memory-loader] No MEMORY.md found — nothing to save.')
+  if (!existsSync(memoryDir)) {
+    console.log('[memory-loader] No memory directory — skipping session log.')
     return
   }
 
   const timestamp = new Date().toISOString().slice(0, 16).replace('T', ' ')
 
-  console.log(`[memory-loader] Session ending at ${timestamp}`)
-  console.log(`[memory-loader] Summarize this session and append to: ${memoryFile}`)
-  console.log(``)
-  console.log(`Format:`)
-  console.log(`## Session: ${timestamp}`)
-  console.log(`- Files modified: \`path/to/file.ts\``)
-  console.log(`- Decision: [what and why]`)
-  console.log(`- Fixed: [bug description]`)
-  console.log(`- Open: [ ] [next step]`)
+  // Gather git facts automatically
+  const branch = run('git rev-parse --abbrev-ref HEAD') ?? 'unknown'
+  const recentCommits = run('git log --oneline -5') ?? '(no commits)'
+  const changedFiles = run('git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only') ?? '(no changes)'
+  const uncommitted = run('git status --short') ?? ''
+
+  const entry = `
+### Session: ${timestamp}
+- **Branch:** ${branch}
+- **Commits (letzte 5):**
+\`\`\`
+${recentCommits}
+\`\`\`
+- **Geänderte Dateien:**
+\`\`\`
+${changedFiles || '(keine)'}
+\`\`\`
+${uncommitted ? `- **Uncommitted:**\n\`\`\`\n${uncommitted}\n\`\`\`` : ''}
+- **Notizen:** _(Claude soll hier ergänzen)_
+- **Offen:** _(Claude soll hier ergänzen)_
+
+`
+
+  if (!existsSync(logFile)) {
+    writeFileSync(logFile, `---\nname: Session-Dokumentation\ndescription: Automatisch geloggte Sessions mit Git-Fakten\ntype: feedback\n---\n`)
+  }
+
+  appendFileSync(logFile, entry)
+
+  console.log(`[memory-loader] Session logged → ${logFile}`)
+  console.log(`[memory-loader] Branch: ${branch} | ${timestamp}`)
 }
 
 main()

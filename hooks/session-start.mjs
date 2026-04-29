@@ -1,33 +1,15 @@
 #!/usr/bin/env node
 /**
  * memory-loader — SessionStart hook
- * Reads all *.md files from the project memory directory and prints
- * a summary so Claude picks it up at session start.
+ * - Neues Projekt: legt Memory-Verzeichnis + MEMORY.md automatisch an
+ * - Bestehendes Projekt: druckt alle Memory-Files als Banner in den Kontext
  */
 
-import { readFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'fs'
+import { readFileSync, existsSync, readdirSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 
 const today = new Date().toISOString().slice(0, 10)
-
-const MEMORY_TEMPLATE = `# Project Memory
-
-> Auto-managed by memory-loader.
-> Last updated: ${today}
-
-## Project Overview
-[Describe the project in 1-2 sentences]
-
-## Current Phase
-[Current phase or sprint]
-
-## Open Items
-- [ ] ...
-
-## Sessions
-<!-- Sessions are appended automatically by memory-loader -->
-`
 
 function getMemoryDir() {
   const projectDir = process.cwd()
@@ -35,38 +17,89 @@ function getMemoryDir() {
   return join(homedir(), '.claude', 'projects', sanitized, 'memory')
 }
 
+function createStarter(memoryDir) {
+  mkdirSync(memoryDir, { recursive: true })
+
+  const template = `---
+name: Projektübersicht
+description: Automatisch angelegt von memory-loader beim ersten Start
+type: project
+---
+# Projektübersicht
+
+> Angelegt: ${today}
+> Pfad: ${process.cwd()}
+
+## Projekt auf einen Blick
+
+_Beschreibe das Projekt in 1-2 Sätzen._
+
+## Stack
+
+_Tech Stack eintragen._
+
+## Non-Negotiables
+
+_Wichtige Regeln, die nie vergessen werden dürfen._
+
+## Aktueller Stand
+
+- **Phase:** _eintragen_
+- **Nächste Prio:** _eintragen_
+
+## Offene Punkte
+
+- [ ] _eintragen_
+
+## Sessions
+
+_Wird automatisch von memory-loader am Session-Ende ergänzt._
+`
+
+  writeFileSync(join(memoryDir, 'MEMORY.md'), template)
+  console.log(`[memory-loader] Neues Projekt erkannt — Memory-Verzeichnis angelegt:`)
+  console.log(`  ${memoryDir}`)
+  console.log(`  → MEMORY.md erstellt. Bitte Projektbeschreibung eintragen.`)
+}
+
 function main() {
   const memoryDir = getMemoryDir()
 
-  // Create directory + starter MEMORY.md if missing
+  // Neues Projekt: automatisch anlegen
   if (!existsSync(memoryDir)) {
-    mkdirSync(memoryDir, { recursive: true })
-    writeFileSync(join(memoryDir, 'MEMORY.md'), MEMORY_TEMPLATE)
-    console.log(`[memory-loader] Created new memory directory: ${memoryDir}`)
+    createStarter(memoryDir)
     return
   }
 
-  // Read all .md files
   const files = readdirSync(memoryDir).filter(f => f.endsWith('.md'))
 
+  // Verzeichnis leer: Starter anlegen
   if (files.length === 0) {
-    writeFileSync(join(memoryDir, 'MEMORY.md'), MEMORY_TEMPLATE)
-    console.log(`[memory-loader] No memory files found — created MEMORY.md template`)
+    createStarter(memoryDir)
     return
   }
 
-  // Print contents so Claude picks them up in context
-  console.log(`[memory-loader] Loading ${files.length} memory file(s) from ${memoryDir}\n`)
-  console.log('---BEGIN MEMORY---')
+  // Bestehendes Projekt: Memory laden
+  const ordered = [
+    'MEMORY.md',
+    ...files.filter(f => f !== 'MEMORY.md').sort()
+  ].filter(f => files.includes(f))
 
-  for (const file of files) {
+  console.log(`\n${'═'.repeat(60)}`)
+  console.log(`  PROJECT MEMORY LOADED (${ordered.length} files)`)
+  console.log(`  ${memoryDir}`)
+  console.log(`${'═'.repeat(60)}\n`)
+
+  for (const file of ordered) {
     const content = readFileSync(join(memoryDir, file), 'utf-8')
     console.log(`\n### ${file}\n`)
     console.log(content)
+    console.log()
   }
 
-  console.log('---END MEMORY---')
-  console.log(`\n[memory-loader] Done. Use ctx_search to query indexed memory.`)
+  console.log(`${'═'.repeat(60)}`)
+  console.log(`  REMEMBER: Update feedback_session_log.md at session end.`)
+  console.log(`${'═'.repeat(60)}\n`)
 }
 
 main()
