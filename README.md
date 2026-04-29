@@ -59,12 +59,18 @@ At every session end, the hook writes automatically:
 
 ## Install
 
-```
-/plugin marketplace add peterzeleznik/memory-loader
-/plugin install memory-loader@memory-loader
+```bash
+curl -fsSL https://raw.githubusercontent.com/peterzeleznik/memory-loader/main/install.sh | bash
 ```
 
-Choose **"Install for you (user scope)"** — this makes it active in all your projects automatically.
+Or manually:
+
+```bash
+git clone https://github.com/peterzeleznik/memory-loader.git ~/.claude/plugins/memory-loader
+bash ~/.claude/plugins/memory-loader/install.sh
+```
+
+Then restart Claude Code — that's it.
 
 ## Works best with
 
